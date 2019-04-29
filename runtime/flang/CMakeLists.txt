@@ -476,6 +476,26 @@ add_flang_library(flang_shared
   ${SHARED_SOURCES}
   )
 set_property(TARGET flang_shared PROPERTY OUTPUT_NAME flang)
+
+
+# Set the two libflang targets to use a different directory for their
+# modulefiles. Even though all .mod files are the same in each build,
+# read/write is not atomic so it is possible for one target X to read
+# a .mod file that another target Y is in the middle of writing. This
+# can cause X to read a truncated .mod file and report
+#    F90-F-0004-Corrupt or Old Module
+# then fail.
+# Make each target use a separate directory for its .mod files to
+# avoid this.
+set_target_properties(flang_shared
+  PROPERTIES
+  Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/include
+)
+set_target_properties(flang_static
+  PROPERTIES
+  Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/include-static
+)
+
 target_link_libraries(flang_shared ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib/libflangrti.so)
 # Resolve symbols against libm and librt
 target_link_libraries(flang_shared m rt)
